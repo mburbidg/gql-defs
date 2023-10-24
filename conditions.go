@@ -5,13 +5,19 @@ package gqldefs
 var StatusMap map[string]StatusSubclass = map[string]StatusSubclass{}
 
 type StatusClass interface {
+	Category() string
 	Code() string
 	Description() string
 }
 
 type statusClass struct {
+	category    string
 	code        string
 	description string
+}
+
+func (s statusClass) Category() string {
+	return s.category
 }
 
 func (s statusClass) Code() string {
@@ -81,6 +87,13 @@ type noData struct {
 }
 
 var NoData *noData
+
+type informational struct {
+	statusClass
+	NoSubclass StatusSubclass
+}
+
+var Informational *informational
 
 type connectionException struct {
 	statusClass
@@ -198,14 +211,22 @@ type graphTypeViolation struct {
 
 var GraphTypeViolation *graphTypeViolation
 
+func Code(gqlStatus string) string {
+	return FirstN(gqlStatus, 2)
+}
+
+func Subcode(gqlStatus string) string {
+	return LastN(gqlStatus, 3)
+}
+
 func init() {
 	SuccessfulCompletion = &succesfulCompletion{
-		statusClass: statusClass{code: "00", description: "successful completion"},
+		statusClass: statusClass{category: "S", code: "00", description: "successful completion"},
 	}
 	SuccessfulCompletion.NoSubclass = newStatusSubclass("000", "(no subclass)", SuccessfulCompletion)
 
 	Warning = &warning{
-		statusClass: statusClass{code: "01", description: "warning"},
+		statusClass: statusClass{category: "W", code: "01", description: "warning"},
 	}
 	Warning.NoSubclass = newStatusSubclass("000", "(no subclass)", Warning)
 	Warning.StringDataWriteTruncation = newStatusSubclass("004", "string data, right truncation", Warning)
@@ -214,18 +235,23 @@ func init() {
 	Warning.NullValueEliminatedInSetFunction = newStatusSubclass("G11", "null value eliminated in set function", Warning)
 
 	NoData = &noData{
-		statusClass: statusClass{code: "02", description: "no data"},
+		statusClass: statusClass{category: "N", code: "02", description: "no data"},
 	}
 	NoData.NoSubclass = newStatusSubclass("000", "(no subclass)", NoData)
 
+	Informational = &informational{
+		statusClass: statusClass{category: "I", code: "03", description: "no data"},
+	}
+	Informational.NoSubclass = newStatusSubclass("000", "(no subclass)", Informational)
+
 	ConnectionException = &connectionException{
-		statusClass: statusClass{code: "08", description: "connection exception"},
+		statusClass: statusClass{category: "X", code: "08", description: "connection exception"},
 	}
 	ConnectionException.NoSubclass = newStatusSubclass("000", "(no subclass)", ConnectionException)
 	ConnectionException.TransactionResolutionUnknown = newStatusSubclass("007", "transaction resolution unknown", ConnectionException)
 
 	DataException = &dataException{
-		statusClass: statusClass{code: "22", description: "data exception"},
+		statusClass: statusClass{category: "X", code: "22", description: "data exception"},
 	}
 	DataException.NoSubclass = newStatusSubclass("000", "(no subclass)", DataException)
 	DataException.StringDataWriteTruncation = newStatusSubclass("001", "string data, right truncation", DataException)
@@ -271,7 +297,7 @@ func init() {
 	DataException.IncompatibleTemporalInstantUnitGroups = newStatusSubclass("G14", "incompatible temporal instant unit groups", DataException)
 
 	InvalidTransactionState = &invalidTransactionState{
-		statusClass: statusClass{code: "25", description: "invalid transaction state"},
+		statusClass: statusClass{category: "X", code: "25", description: "invalid transaction state"},
 	}
 	InvalidTransactionState.NoSubclass = newStatusSubclass("000", "(no subclass)", InvalidTransactionState)
 	InvalidTransactionState.ActiveGQLTransaction = newStatusSubclass("G01", "active GQL-transaction", InvalidTransactionState)
@@ -280,19 +306,19 @@ func init() {
 	InvalidTransactionState.AccessingMultipleGraphsNotSupported = newStatusSubclass("G04", "accessing multiple graphs not supported", InvalidTransactionState)
 
 	InvalidTransactionTermination = &invalidTransactionTermination{
-		statusClass: statusClass{code: "2D", description: "invalid transaction termination"},
+		statusClass: statusClass{category: "X", code: "2D", description: "invalid transaction termination"},
 	}
 	InvalidTransactionTermination.NoSubclass = newStatusSubclass("000", "(no subclass)", InvalidTransactionTermination)
 
 	TransactionRollback = &transactionRollback{
-		statusClass: statusClass{code: "40", description: "transaction rollback"},
+		statusClass: statusClass{category: "X", code: "40", description: "transaction rollback"},
 	}
 	TransactionRollback.NoSubclass = newStatusSubclass("000", "(no subclass)", TransactionRollback)
 	TransactionRollback.IntegrityConstraintViolation = newStatusSubclass("002", "integrity constraint violation", TransactionRollback)
 	TransactionRollback.StatementCompletionUnknown = newStatusSubclass("003", "statement completion unknown", TransactionRollback)
 
 	SyntaxErrorOrAccessRuleViolation = &syntaxErrorOrAccessRuleViolation{
-		statusClass: statusClass{code: "42", description: "syntax error or access rule violation"},
+		statusClass: statusClass{category: "X", code: "42", description: "syntax error or access rule violation"},
 	}
 	SyntaxErrorOrAccessRuleViolation.NoSubclass = newStatusSubclass("000", "(no subclass)", SyntaxErrorOrAccessRuleViolation)
 	SyntaxErrorOrAccessRuleViolation.InvalidSyntax = newStatusSubclass("001", "invalid syntax", SyntaxErrorOrAccessRuleViolation)
@@ -308,13 +334,13 @@ func init() {
 	SyntaxErrorOrAccessRuleViolation.NumberOfNodePropertiesExceedsSupportedMinimum = newStatusSubclass("000", "number of node properties exceeds supported maximum", SyntaxErrorOrAccessRuleViolation)
 
 	DependentObjectError = &dependentObjectError{
-		statusClass: statusClass{code: "G1", description: "dependent object error"},
+		statusClass: statusClass{category: "X", code: "G1", description: "dependent object error"},
 	}
 	DependentObjectError.NoSubclass = newStatusSubclass("000", "(no subclass)", DependentObjectError)
 	DependentObjectError.EdgesStillExist = newStatusSubclass("001", "edges still exist", DependentObjectError)
 
 	GraphTypeViolation = &graphTypeViolation{
-		statusClass: statusClass{code: "G2", description: "graph type violation"},
+		statusClass: statusClass{category: "X", code: "G2", description: "graph type violation"},
 	}
 	GraphTypeViolation.NoSubclass = newStatusSubclass("000", "(no subclass)", GraphTypeViolation)
 }
